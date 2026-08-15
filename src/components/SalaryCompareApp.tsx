@@ -44,7 +44,7 @@ export function SalaryCompareApp({
             </h1>
           </div>
         </div>
-        <div className="relative z-10 mx-auto -mt-48 max-w-[560px] px-6 sm:-mt-44">
+        <div className="relative z-20 mx-auto -mt-48 max-w-[560px] px-6 sm:-mt-44">
           <ResultDashboard
             result={result}
             salary={salary}
@@ -72,7 +72,7 @@ export function SalaryCompareApp({
           </p>
         </div>
       </div>
-      <div className="relative z-10 mx-auto -mt-40 max-w-[488px] px-6 sm:-mt-32">
+      <div className="relative z-20 mx-auto -mt-40 max-w-[488px] px-6 sm:-mt-32">
         <CalculatorCard
           fromCountry={fromCountry}
           toCountry={toCountry}
@@ -90,7 +90,7 @@ export function SalaryCompareApp({
 
 function DataSourceFooter() {
   return (
-    <div className="relative z-10 flex flex-wrap items-center justify-center gap-2 px-6 pb-8 pt-10 text-center text-xs text-fg-muted">
+    <div className="relative z-0 flex flex-wrap items-center justify-center gap-2 px-6 pb-8 pt-10 text-center text-xs text-fg-muted">
       <span>Illustrative reference data</span>
       <span aria-hidden className="text-border-strong">
         •

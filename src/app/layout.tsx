@@ -9,10 +9,35 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+const SITE_URL = "https://salaryshift.vercel.app";
+const DESCRIPTION =
+  "See the equivalent salary you need in another country to live a similar quality of life.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "SalaryShift",
-  description:
-    "See the equivalent salary you need in another country to live a similar quality of life.",
+  description: DESCRIPTION,
+  openGraph: {
+    title: "SalaryShift",
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: "SalaryShift",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "SalaryShift — compare your salary abroad",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SalaryShift",
+    description: DESCRIPTION,
+    images: ["/og-image.jpg"],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

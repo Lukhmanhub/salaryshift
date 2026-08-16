@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalculatorCard } from "@/components/CalculatorCard";
 import { ResultDashboard } from "@/components/ResultDashboard";
 import { getCountry } from "@/lib/data/countries";
 import { computeComparison } from "@/lib/calculations";
+import { registerHomeReset } from "@/lib/homeReset";
 import type { Country } from "@/lib/types";
 
 export function SalaryCompareApp({
@@ -23,6 +24,11 @@ export function SalaryCompareApp({
   );
   const [salary, setSalary] = useState(0);
   const [view, setView] = useState<"calculator" | "results">("calculator");
+
+  useEffect(() => {
+    registerHomeReset(() => setView("calculator"));
+    return () => registerHomeReset(null);
+  }, []);
 
   const result = useMemo(
     () =>

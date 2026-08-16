@@ -6,7 +6,7 @@ import { CountrySelect } from "@/components/CountrySelect";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { SalaryRangeBar } from "@/components/SalaryRangeBar";
 import { getCountry } from "@/lib/data/countries";
-import { computeComparison, estimateOfferScore, toMonthly } from "@/lib/calculations";
+import { computeComparison, estimateOfferScore } from "@/lib/calculations";
 import { formatMoney, formatPercent } from "@/lib/format";
 import type { Country } from "@/lib/types";
 
@@ -17,22 +17,24 @@ const EXPECTED_HOUSING_SHARE = 0.3;
 
 export function OfferEvaluator() {
   const [currentCountry, setCurrentCountry] = useState<Country>(getCountry("IN"));
-  const [currentSalaryAnnual, setCurrentSalaryAnnual] = useState(1200000);
+  const [currentSalaryMonthly, setCurrentSalaryMonthly] = useState(0);
 
   const [offerCountry, setOfferCountry] = useState<Country>(getCountry("AE"));
-  const [offerBaseMonthly, setOfferBaseMonthly] = useState(10000);
+  const [offerBaseMonthly, setOfferBaseMonthly] = useState(0);
   const [offerBonusAnnual, setOfferBonusAnnual] = useState(0);
   const [housingAllowanceMonthly, setHousingAllowanceMonthly] = useState(0);
   const [otherAllowancesMonthly, setOtherAllowancesMonthly] = useState(0);
+
+  const hasValidInputs = currentSalaryMonthly > 0 && offerBaseMonthly > 0;
 
   const comparison = useMemo(
     () =>
       computeComparison({
         fromCountry: currentCountry,
         toCountry: offerCountry,
-        currentSalaryMonthly: toMonthly(currentSalaryAnnual, "annual"),
+        currentSalaryMonthly,
       }),
-    [currentCountry, offerCountry, currentSalaryAnnual]
+    [currentCountry, offerCountry, currentSalaryMonthly]
   );
 
   const offerTotalCompMonthly =
@@ -110,10 +112,11 @@ export function OfferEvaluator() {
               excludeCode={offerCountry.code}
             />
             <CurrencyInput
-              label="Current salary (annual)"
+              label="Current salary (monthly)"
               symbol={currentCountry.currencySymbol}
-              value={currentSalaryAnnual}
-              onChange={setCurrentSalaryAnnual}
+              value={currentSalaryMonthly}
+              onChange={setCurrentSalaryMonthly}
+              placeholder="100,000"
             />
           </div>
         </div>
@@ -133,6 +136,7 @@ export function OfferEvaluator() {
                 symbol={offerCountry.currencySymbol}
                 value={offerBaseMonthly}
                 onChange={setOfferBaseMonthly}
+                placeholder="10,000"
               />
               <CurrencyInput
                 label="Bonus (annual)"
@@ -157,80 +161,91 @@ export function OfferEvaluator() {
         </div>
       </div>
 
-      {/* Offer score */}
-      <div className="mt-8 rounded-[24px] border border-border-subtle bg-surface p-6 sm:p-10">
-        <div className="flex flex-wrap items-center justify-between gap-6">
-          <div>
-            <p className="text-sm font-medium text-fg-secondary">Your Offer Score</p>
-            <p className="mt-2 text-6xl font-semibold tabular-nums">
-              {score.overall}
-              <span className="text-2xl text-fg-muted"> / 100</span>
-            </p>
-            <p className="mt-2 flex items-center gap-2 text-lg font-medium">
-              {pctVsEquivalent >= 0 ? (
-                <TrendingUp size={18} className="text-success" />
-              ) : (
-                <TrendingDown size={18} className="text-critical" />
-              )}
-              {verdict}
+      {hasValidInputs ? (
+        <>
+          {/* Offer score */}
+          <div className="mt-8 rounded-[24px] border border-border-subtle bg-surface p-6 sm:p-10">
+            <div className="flex flex-wrap items-center justify-between gap-6">
+              <div>
+                <p className="text-sm font-medium text-fg-secondary">Your Offer Score</p>
+                <p className="mt-2 text-6xl font-semibold tabular-nums">
+                  {score.overall}
+                  <span className="text-2xl text-fg-muted"> / 100</span>
+                </p>
+                <p className="mt-2 flex items-center gap-2 text-lg font-medium">
+                  {pctVsEquivalent >= 0 ? (
+                    <TrendingUp size={18} className="text-success" />
+                  ) : (
+                    <TrendingDown size={18} className="text-critical" />
+                  )}
+                  {verdict}
+                </p>
+              </div>
+              <div className="grid flex-1 min-w-64 grid-cols-2 gap-4 sm:grid-cols-3">
+                <ScoreBar label="Purchasing Power" value={score.components.purchasingPower} />
+                <ScoreBar label="Take-home Pay" value={score.components.takeHome} />
+                <ScoreBar label="Housing Affordability" value={score.components.housing} />
+                <ScoreBar label="Savings Potential" value={score.components.savings} />
+                <ScoreBar label="Benefits" value={score.components.benefits} />
+              </div>
+            </div>
+
+            <p className="mt-6 text-base leading-relaxed text-fg-secondary">
+              This offer appears{" "}
+              <strong>
+                {pctVsEquivalent >= 0 ? "stronger" : "weaker"}
+              </strong>{" "}
+              than a lifestyle-equivalent salary, at approximately{" "}
+              <strong>{formatPercent(pctVsEquivalent, { showSign: true })}</strong>{" "}
+              relative to our estimate of{" "}
+              {formatMoney(comparison.range.equivalent, comparison.toCountry)}/month.
             </p>
           </div>
-          <div className="grid flex-1 min-w-64 grid-cols-2 gap-4 sm:grid-cols-3">
-            <ScoreBar label="Purchasing Power" value={score.components.purchasingPower} />
-            <ScoreBar label="Take-home Pay" value={score.components.takeHome} />
-            <ScoreBar label="Housing Affordability" value={score.components.housing} />
-            <ScoreBar label="Savings Potential" value={score.components.savings} />
-            <ScoreBar label="Benefits" value={score.components.benefits} />
+
+          <div className="mt-8 rounded-[24px] border border-border-subtle bg-surface p-6 sm:p-8">
+            <h2 className="mb-5 text-lg font-semibold">Your negotiation range</h2>
+            <SalaryRangeBar
+              range={comparison.range}
+              country={comparison.toCountry}
+              marker={{ label: "Your offer", value: offerTotalCompMonthly }}
+            />
           </div>
+
+          <div className="mt-8 space-y-3">
+            <InsightRow>
+              Your offer is approximately{" "}
+              {formatPercent(Math.abs(pctVsEquivalent))}{" "}
+              {pctVsEquivalent >= 0 ? "above" : "below"} our lifestyle-equivalent
+              salary estimate.
+            </InsightRow>
+            {shortfall > 0 && (
+              <InsightRow>
+                Housing is a major variable. If your housing costs exceed{" "}
+                {formatMoney(expectedHousingMonthly, comparison.toCountry)}/month,
+                most of your expected financial improvement may disappear.
+              </InsightRow>
+            )}
+            {shortfall > 0 && (
+              <InsightRow>
+                A {formatMoney(shortfall, comparison.toCountry)} housing
+                allowance would materially improve this package.
+              </InsightRow>
+            )}
+            <InsightRow>
+              To preserve your current standard of living, target at least{" "}
+              {formatMoney(comparison.range.equivalent, comparison.toCountry)}
+              /month in total compensation.
+            </InsightRow>
+          </div>
+        </>
+      ) : (
+        <div className="mt-8 rounded-[24px] border border-dashed border-border-strong bg-surface-subtle p-10 text-center">
+          <p className="text-base font-medium text-fg-secondary">
+            Enter your current salary and offer base salary to see your offer
+            score, negotiation range, and insights.
+          </p>
         </div>
-
-        <p className="mt-6 text-base leading-relaxed text-fg-secondary">
-          This offer appears{" "}
-          <strong>
-            {pctVsEquivalent >= 0 ? "stronger" : "weaker"}
-          </strong>{" "}
-          than a lifestyle-equivalent salary, at approximately{" "}
-          <strong>{formatPercent(pctVsEquivalent, { showSign: true })}</strong>{" "}
-          relative to our estimate of{" "}
-          {formatMoney(comparison.range.equivalent, comparison.toCountry)}/month.
-        </p>
-      </div>
-
-      <div className="mt-8 rounded-[24px] border border-border-subtle bg-surface p-6 sm:p-8">
-        <h2 className="mb-5 text-lg font-semibold">Your negotiation range</h2>
-        <SalaryRangeBar
-          range={comparison.range}
-          country={comparison.toCountry}
-          marker={{ label: "Your offer", value: offerTotalCompMonthly }}
-        />
-      </div>
-
-      <div className="mt-8 space-y-3">
-        <InsightRow>
-          Your offer is approximately{" "}
-          {formatPercent(Math.abs(pctVsEquivalent))}{" "}
-          {pctVsEquivalent >= 0 ? "above" : "below"} our lifestyle-equivalent
-          salary estimate.
-        </InsightRow>
-        {shortfall > 0 && (
-          <InsightRow>
-            Housing is a major variable. If your housing costs exceed{" "}
-            {formatMoney(expectedHousingMonthly, comparison.toCountry)}/month,
-            most of your expected financial improvement may disappear.
-          </InsightRow>
-        )}
-        {shortfall > 0 && (
-          <InsightRow>
-            A {formatMoney(shortfall, comparison.toCountry)} housing
-            allowance would materially improve this package.
-          </InsightRow>
-        )}
-        <InsightRow>
-          To preserve your current standard of living, target at least{" "}
-          {formatMoney(comparison.range.equivalent, comparison.toCountry)}
-          /month in total compensation.
-        </InsightRow>
-      </div>
+      )}
     </div>
   );
 }

@@ -27,7 +27,7 @@ export function ResultDashboard({
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-2 text-sm font-semibold text-fg"
+          className="-ml-2 -mt-2 flex cursor-pointer items-center gap-2 rounded-full px-2 py-1.5 text-sm font-semibold text-fg transition-colors hover:bg-surface-subtle active:bg-border-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
         >
           <ArrowLeft size={16} />
           Back
